@@ -344,6 +344,11 @@
   window.addEventListener("blur", () => { if (state === State.PLAY) togglePause(); });
 
   // --------------------------------------------------------- game control
+  // lightweight event bus so the leaderboard/token module (meta.js) can react
+  function emit(name, detail) {
+    try { window.dispatchEvent(new CustomEvent("bullrun:" + name, { detail })); } catch (e) {}
+  }
+
   function startGame() {
     Sound.resume();
     Object.assign(game, makeFreshGame());
@@ -351,6 +356,7 @@
     show(els.start, false); show(els.over, false); show(els.pause, false);
     show(els.hud, true);
     lastT = performance.now();
+    emit("play");
   }
   function toMenu() {
     state = State.MENU;
@@ -358,6 +364,7 @@
     show(els.start, true);
     els.startBest.textContent = fmt(best);
     els.startCoins.textContent = fmt(coinBank);
+    emit("menu");
   }
   function togglePause() {
     if (state === State.PLAY) { state = State.PAUSE; show(els.pause, true); }
@@ -380,6 +387,7 @@
     els.finalCoins.textContent = fmt(game.coins);
     els.finalBest.textContent = fmt(best);
     show(els.newBest, isBest);
+    emit("gameover", { score: sc, coins: game.coins, best, isBest });
     setTimeout(() => { show(els.over, true); }, 650);
   }
 
@@ -640,8 +648,17 @@
     // HUD
     els.coins.textContent = fmt(g.coins);
     els.score.textContent = fmt(Math.floor(g.score));
-    // $BULLRUN keeps pumping the further you run (memecoin numbers go up)
-    els.tickerPct.textContent = "▲ +" + fmt(Math.floor(g.dist * 1.4 + g.coins * 8)) + "%";
+    // ticker: real $BULLRUN 24h move once the coin is tradeable, otherwise a
+    // gameplay "pump" that climbs with distance
+    const tok = window.BULLRUN_TOKEN;
+    if (tok && tok.live && isFinite(tok.change24h)) {
+      const up = tok.change24h >= 0;
+      els.tickerPct.textContent = (up ? "▲ +" : "▼ ") + tok.change24h.toFixed(1) + "%";
+      els.tickerPct.classList.toggle("down", !up);
+    } else {
+      els.tickerPct.textContent = "▲ +" + fmt(Math.floor(g.dist * 1.4 + g.coins * 8)) + "%";
+      els.tickerPct.classList.remove("down");
+    }
     updatePowerupBar();
   }
 

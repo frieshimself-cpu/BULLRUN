@@ -47,6 +47,32 @@
           <div><b>P</b> pause &nbsp;·&nbsp; <b>M</b> mute</div>
         </div>
         <div class="best-line">Best <span id="start-best">0</span> &nbsp;·&nbsp; <span class="coin-dot"></span> <span id="start-coins">0</span></div>
+        <button id="lb-btn" class="ghost-btn">🏆 Leaderboard</button>
+
+        <div class="ca-box">
+          <div class="ca-top">
+            <span class="ca-label">$BULLRUN&nbsp;·&nbsp;CONTRACT</span>
+            <span id="token-stat" class="token-stat">goes live on deploy</span>
+          </div>
+          <div class="ca-row">
+            <code id="ca-text"></code>
+            <button id="ca-copy" class="ca-copy" title="Copy address">⧉ Copy</button>
+          </div>
+          <div class="ca-links">
+            <a id="ca-pump" href="#" target="_blank" rel="noopener noreferrer">pump.fun ↗</a>
+            <a id="ca-chart" href="#" target="_blank" rel="noopener noreferrer">chart ↗</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leaderboard screen -->
+    <div id="leaderboard-screen" class="overlay hidden">
+      <div class="panel">
+        <h2>🏆 Leaderboard</h2>
+        <ol id="lb-list" class="lb-list"><li class="lb-empty">Loading…</li></ol>
+        <div id="lb-scope" class="lb-scope"></div>
+        <button id="lb-close" class="big-btn">Close</button>
       </div>
     </div>
 
@@ -70,6 +96,11 @@
         </div>
         <div id="new-best" class="new-best hidden">★ New Best! ★</div>
         <div class="airdrop-note">🪂 Climb the leaderboard — top runners get supply airdrops.</div>
+        <div class="lb-submit">
+          <input id="lb-name" maxlength="14" autocomplete="off" spellcheck="false" placeholder="your tag" />
+          <button id="lb-post" class="ghost-btn">Post score 🏆</button>
+        </div>
+        <div id="lb-result" class="lb-result"></div>
         <button id="again-btn" class="big-btn">↺ Run Again</button>
         <button id="menu-btn" class="ghost-btn">Menu</button>
       </div>
@@ -80,5 +111,6 @@
   </div>
 
   <script src="js/game.js"></script>
+  <script src="js/meta.js"></script>
 </body>
 </html>

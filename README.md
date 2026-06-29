@@ -49,6 +49,35 @@ You have two ways to make pushes deploy automatically — pick **one**:
 
    Use this if you'd rather keep deploys in GitHub CI. If you use the native Git integration above, you can delete this workflow to avoid double-deploys.
 
+## $BULLRUN token
+
+The site is wired to a pump.fun token. The mint (contract address) lives in **one place** — the top of [`js/meta.js`](js/meta.js):
+
+```js
+const TOKEN_CA = "FPfeVMnF4RaWV8yWzFXfoa6jMebp7fdepZPL9jJtpump";
+```
+
+From that one constant the site derives:
+
+- The **contract box** on the menu (address + copy button + `pump.fun ↗` and `chart ↗` links).
+- **Live price data** pulled from the public [DexScreener](https://dexscreener.com) API every 30s. Before the coin is tradeable DexScreener returns nothing, so the box reads *“goes live on deploy”* and the in-game ticker shows the gameplay pump. **The moment the coin has a market, the ticker and the box switch to the real price, market cap and 24h move** — no redeploy needed.
+
+> Note: this reflects on-chain market data; it is not financial advice, and the “airdrop” copy is flavour text — wire up any real rewards yourself.
+
+## Leaderboard
+
+The 🏆 leaderboard works in two tiers:
+
+- **Out of the box:** a **local, per-device** board (stored in `localStorage`) so posting a score works immediately.
+- **Global (cross-device):** add a Redis-compatible KV store and the serverless function at [`api/scores.js`](api/scores.js) becomes a real global board automatically.
+
+To turn on the global board on Vercel:
+
+1. In your Vercel project → **Storage** → create a **KV / Upstash for Redis** database and connect it to the project. Vercel injects `KV_REST_API_URL` and `KV_REST_API_TOKEN` for you. (Plain Upstash works too — it also accepts `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`.)
+2. Redeploy. The function reads those env vars; if they're absent it just returns the local-fallback response, so nothing breaks before you set it up.
+
+Scores are stored as a sorted set keeping each tag's best. They're **client-reported**, so treat the board as a fun ranking, not an anti-cheat tournament.
+
 ## Controls
 
 | Action        | Keyboard            | Touch            |

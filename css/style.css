@@ -122,6 +122,7 @@ body {
 }
 #ticker .t-name { color: var(--gold); }
 #ticker #ticker-pct { color: #6ee78a; }
+#ticker #ticker-pct.down { color: #ff7a6b; }
 
 .ico { width: 22px; height: 22px; display: inline-block; flex: 0 0 auto; }
 .coin-ico {
@@ -269,6 +270,62 @@ h2 { font-size: clamp(28px, 7cqmin, 46px); margin-bottom: 18px; color: var(--gol
   font-weight: bold;
   color: #9affd0;
 }
+
+/* ---------- contract / token box ---------- */
+.ca-box {
+  margin: 16px auto 4px;
+  max-width: 96%;
+  background: rgba(20, 14, 30, 0.55);
+  border: 1.5px solid rgba(255, 210, 63, 0.4);
+  border-radius: 12px;
+  padding: 8px 10px;
+  text-align: left;
+}
+.ca-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 5px; }
+.ca-label { font-size: clamp(10px, 2.2cqmin, 12px); letter-spacing: 0.6px; color: var(--gold); font-weight: bold; }
+.token-stat { font-size: clamp(10px, 2.2cqmin, 12px); color: #9affd0; font-weight: bold; white-space: nowrap; }
+.token-stat.down { color: #ff7a6b; }
+.ca-row { display: flex; align-items: center; gap: 6px; }
+#ca-text {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: clamp(9px, 2cqmin, 12px); color: #e6dcff;
+  background: rgba(0, 0, 0, 0.3); border-radius: 7px; padding: 6px 8px;
+}
+.ca-copy {
+  flex: 0 0 auto; border: none; border-radius: 7px; cursor: pointer;
+  background: var(--gold); color: var(--ink); font-weight: 900;
+  font-size: clamp(10px, 2.2cqmin, 12px); padding: 6px 9px; white-space: nowrap;
+}
+.ca-copy:active { transform: scale(0.94); }
+.ca-links { display: flex; gap: 14px; margin-top: 6px; }
+.ca-links a { color: #8fd0ff; font-size: clamp(11px, 2.3cqmin, 13px); text-decoration: none; font-weight: bold; }
+.ca-links a:active { opacity: 0.7; }
+
+/* ---------- leaderboard ---------- */
+#leaderboard-screen { z-index: 30; }
+.lb-list { list-style: none; text-align: left; margin: 8px 0 12px; max-height: 46cqh; overflow-y: auto; }
+.lb-list li {
+  display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 9px;
+  font-size: clamp(13px, 2.8cqmin, 17px);
+}
+.lb-list li:nth-child(odd) { background: rgba(255, 255, 255, 0.05); }
+.lb-list .lb-rank { width: 1.9em; text-align: right; color: var(--gold); font-weight: 900; }
+.lb-list .lb-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-list .lb-score { font-weight: 900; color: #fff; }
+.lb-list li.me { background: rgba(255, 210, 63, 0.18); outline: 1px solid rgba(255, 210, 63, 0.5); }
+.lb-list li.lb-empty { justify-content: center; opacity: 0.7; }
+.lb-scope { font-size: clamp(11px, 2.3cqmin, 13px); opacity: 0.7; margin-bottom: 12px; }
+
+/* ---------- game-over score submit ---------- */
+.lb-submit { display: flex; gap: 8px; justify-content: center; margin: 10px 0 4px; }
+#lb-name {
+  width: 46%; max-width: 180px; border-radius: 10px; border: 2px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.3); color: #fff; padding: 8px 12px; font-size: clamp(14px, 3cqmin, 17px);
+  font-family: inherit; text-align: center;
+}
+#lb-name:focus { outline: none; border-color: var(--gold); }
+.lb-result { font-size: clamp(12px, 2.6cqmin, 15px); color: #9affd0; min-height: 1.1em; margin-bottom: 8px; font-weight: bold; }
 
 .coin-dot {
   display: inline-block;

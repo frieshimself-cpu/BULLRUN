@@ -1,0 +1,8 @@
+{
+  "name": "bullrun",
+  "private": true,
+  "description": "BullRun — an original endless runner. Static site + serverless leaderboard.",
+  "engines": {
+    "node": ">=18"
+  }
+}
