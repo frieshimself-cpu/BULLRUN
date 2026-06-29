@@ -15,6 +15,7 @@
     hud: document.getElementById("hud"),
     coins: document.getElementById("coins"),
     score: document.getElementById("score"),
+    tickerPct: document.getElementById("ticker-pct"),
     powerupBar: document.getElementById("powerup-bar"),
     start: document.getElementById("start-screen"),
     pause: document.getElementById("pause-screen"),
@@ -47,6 +48,7 @@
   const FOCAL = 460;                 // perspective focal length (px)
   const CAM_BACK = 3.1;              // camera distance behind player (world)
   const CAM_HEIGHT = 2.35;           // camera height above ground (world)
+  const Z_NEAR = -CAM_BACK + 0.4;    // near clip just in front of the camera
   const Z_FAR = 60;                  // draw distance
   const GRAVITY = 58;                // jump gravity (world units / s^2)
   const JUMP_V = 16.5;               // jump launch velocity
@@ -118,6 +120,7 @@
       roll() { noise(0.18, 0.18); },
       hit() { tone(180, 0.35, "sawtooth", 0.4, 60); noise(0.3, 0.3); },
       power() { tone(520, 0.12, "triangle", 0.3, 1040); tone(780, 0.18, "triangle", 0.25, 1560); },
+      growl() { tone(150, 0.4, "sawtooth", 0.35, 70); noise(0.35, 0.2); },
       lane() { tone(440, 0.05, "sine", 0.12); },
       setMuted(m) { muted = m; },
       get muted() { return muted; },
@@ -165,6 +168,9 @@
       comboTimer: 0,
       nextMilestone: 500,
       popups: [],
+      // the angry bear chasing behind (0 = far back, 1 = right on your tail)
+      bearClose: 0.14,
+      bearLane: 0,
       // fx
       shake: 0,
       flash: 0,
@@ -569,13 +575,17 @@
 
       if (!safe) {
         if (g.hoverT > 0 || g.shieldT > 0) {
-          // a save: hoverboard burns first, then a shield
+          // a save: hoverboard burns first, then a shield. You stumble, so the
+          // bear lunges much closer — keep stumbling and it'll catch you.
           if (g.hoverT > 0) g.hoverT = 0; else g.shieldT = 0;
           o.passed = true;
           spawnBurst(oWorldX, 1, 0);
-          g.shake = 0.45; g.flash = 0.55;
-          Sound.power();
+          g.shake = 0.5; g.flash = 0.55;
+          // the stumble lets the bear lunge much closer (it recovers as you run)
+          g.bearClose = Math.min(0.88, g.bearClose + 0.42);
+          Sound.power(); Sound.growl();
         } else {
+          // no save — the bear runs you down
           o.passed = true;
           g.shake = 0.8; g.hurtFlash = 1;
           spawnBurst(playerWorldX, 1, 0);
@@ -615,6 +625,13 @@
     for (const pu of g.popups) { pu.y += pu.vy; pu.life -= dt; }
     g.popups = g.popups.filter((pu) => pu.life > 0);
 
+    // the bear chaser eases back toward its trailing baseline while you run
+    // clean, and tracks your lane (it follows you over). A stumble shoves it
+    // closer (handled in collision); if it ever reaches you, it's game over.
+    g.bearClose += (0.14 - g.bearClose) * Math.min(1, dt * 0.5);
+    g.bearLane += (g.laneVisual - g.bearLane) * Math.min(1, dt * 5);
+    if (g.bearClose >= 0.999 && !g.dead) { caughtByBear(); return; }
+
     // fx decay
     if (g.shake > 0) g.shake = Math.max(0, g.shake - dt * 2.2);
     if (g.flash > 0) g.flash = Math.max(0, g.flash - dt * 2);
@@ -623,7 +640,15 @@
     // HUD
     els.coins.textContent = fmt(g.coins);
     els.score.textContent = fmt(Math.floor(g.score));
+    // $BULLRUN keeps pumping the further you run (memecoin numbers go up)
+    els.tickerPct.textContent = "▲ +" + fmt(Math.floor(g.dist * 1.4 + g.coins * 8)) + "%";
     updatePowerupBar();
+  }
+
+  function caughtByBear() {
+    if (game.dead) return;
+    game.bearClose = 1;
+    gameOver();
   }
 
   function applyPowerup(kind) {
@@ -683,6 +708,7 @@
     }
 
     drawParticles();
+    drawBear();   // the chaser is always closest to the camera
     ctx.restore();
 
     // day/night colour grade
@@ -854,9 +880,10 @@
     ctx.fillStyle = bg;
     ctx.fillRect(0, horizon, W, H - horizon);
 
-    // gravel ballast bed (trapezoid)
+    // gravel ballast bed (trapezoid) — extends to the near plane so it fills
+    // the very bottom of the screen instead of cutting off at the bull
     const lf = project(-BED_HALF, 0, Z_FAR), rf = project(BED_HALF, 0, Z_FAR);
-    const ln = project(-BED_HALF, 0, 0), rn = project(BED_HALF, 0, 0);
+    const ln = project(-BED_HALF, 0, Z_NEAR), rn = project(BED_HALF, 0, Z_NEAR);
     const bed = ctx.createLinearGradient(0, horizon, 0, H);
     bed.addColorStop(0, "#8d8578");
     bed.addColorStop(1, "#5c554b");
@@ -868,9 +895,9 @@
     // wooden sleepers (ties), scrolling toward the camera
     const tiePhase = game.dist % 1.4;
     ctx.fillStyle = "#46321f";
-    for (let z = Z_FAR; z > -1.4; z -= 1.4) {
+    for (let z = Z_FAR; z > Z_NEAR; z -= 1.4) {
       const zz = z - tiePhase;
-      if (zz < -1.4) continue;
+      if (zz < Z_NEAR) continue;
       const a = project(-BED_HALF * 0.95, 0.02, zz);
       const b = project(BED_HALF * 0.95, 0.02, zz);
       const c = project(BED_HALF * 0.95, 0.02, zz - 0.45);
@@ -887,7 +914,7 @@
       for (const off of [-gauge, gauge]) {
         const wx = laneX(cl) + off;
         const f1 = project(wx - railHalf, 0.06, Z_FAR), f2 = project(wx + railHalf, 0.06, Z_FAR);
-        const n1 = project(wx - railHalf, 0.06, 0), n2 = project(wx + railHalf, 0.06, 0);
+        const n1 = project(wx - railHalf, 0.06, Z_NEAR), n2 = project(wx + railHalf, 0.06, Z_NEAR);
         ctx.fillStyle = "#cfd4da";
         ctx.beginPath();
         ctx.moveTo(f1.x, f1.y); ctx.lineTo(f2.x, f2.y); ctx.lineTo(n2.x, n2.y); ctx.lineTo(n1.x, n1.y);
@@ -948,11 +975,10 @@
     else { h = 1.6; color = "#34495e"; topColor = "#4a6178"; } // FULL
 
     const len = o.len || 1.1;
-    const NEAR_Z = 0.06;
     const zBack = o.z + len;
-    if (zBack <= NEAR_Z) return;               // fully behind the camera — don't draw
-    const noseBehind = o.z < NEAR_Z;           // front edge already past the camera
-    const zFront = Math.max(o.z, NEAR_Z);      // clamp front to the near plane
+    if (zBack <= Z_NEAR) return;               // fully past the camera — don't draw
+    const zFront = Math.max(o.z, Z_NEAR);      // clamp front to the near plane
+    const noseBehind = o.z < 0.1;              // nose has slipped behind the bull
 
     if (o.type === OB.HIGH) {
       // overhead bar: two posts + a bar up high, with a clear gap to roll under
@@ -997,7 +1023,7 @@
         const nWin = Math.max(2, Math.round(len) - 1);
         for (let i = 0; i < nWin; i++) {
           const zc = zFront + 0.7 + i * ((len - 1) / nWin);
-          if (zc <= NEAR_Z || zc > zBack) continue;
+          if (zc <= Z_NEAR || zc > zBack) continue;
           const a = project(winX, h * 0.74, zc);
           const b = project(winX, h * 0.46, zc + (len - 1) / nWin * 0.62);
           if (a.s <= 0) continue;
@@ -1104,12 +1130,12 @@
     ctx.fill();
     ctx.strokeStyle = "#b9760a"; ctx.lineWidth = Math.max(1, r * 0.16);
     ctx.stroke();
-    // ₿-ish bull mark
-    if (r > 7) {
-      ctx.fillStyle = "#b9760a";
-      ctx.font = `bold ${r}px serif`;
+    // $ — a $BULL memecoin token
+    if (r > 6) {
+      ctx.fillStyle = "#a8690a";
+      ctx.font = `900 ${r * 1.25}px "Trebuchet MS", sans-serif`;
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText("⚡", 0, 1);
+      ctx.fillText("$", 0, r * 0.05);
     }
     ctx.restore();
   }
@@ -1148,6 +1174,127 @@
   }
 
   // ----- particles -----
+  // ============================================================ THE BEAR
+  // An angry bear that chases the bull (Subway-Surfers-guard style). Rendered
+  // in screen space: lurks at the bottom while you run clean, surges up on a
+  // stumble, and lunges in to grab you when the run ends.
+  function drawBear() {
+    const g = game;
+    if (state === State.MENU) return;
+    const close = g.bearClose;
+    if (close < 0.05) return;
+    const at = project(laneX(g.bearLane), 0, 0);
+    const sB = at.s / FOCAL * 60;
+    const u = sB * (0.9 + close * 1.5);              // bear unit grows as it nears
+    const baseY = lerp(H + u * 3.0, at.y + u * 0.2, close);
+    ctx.save();
+    ctx.translate(at.x, baseY);
+    drawBearBody(u, close, g.runPhase * 1.1);
+    ctx.restore();
+  }
+
+  function drawBearBody(u, close, run) {
+    const furDark = "#241608", furMid = "#3f2814", furLight = "#553620";
+    const bw = 2.1 * u, bh = 2.3 * u;
+    const gallop = Math.sin(run);
+
+    // shadow
+    ctx.fillStyle = "rgba(0,0,0,0.28)";
+    ctx.beginPath(); ctx.ellipse(0, 0, bw * 0.7, u * 0.38, 0, 0, Math.PI * 2); ctx.fill();
+
+    // pumping legs
+    ctx.strokeStyle = furDark; ctx.lineCap = "round"; ctx.lineWidth = u * 0.55;
+    for (const side of [-1, 1]) {
+      const sw = side > 0 ? gallop : -gallop;
+      ctx.beginPath();
+      ctx.moveTo(side * bw * 0.34, -bh * 0.12);
+      ctx.lineTo(side * bw * 0.34 + sw * u * 0.18, -u * 0.02 - Math.max(0, sw) * u * 0.22);
+      ctx.stroke();
+    }
+
+    // broad-shouldered body
+    const bg = ctx.createLinearGradient(0, -bh * 1.1, 0, 0);
+    bg.addColorStop(0, furLight); bg.addColorStop(1, furDark);
+    ctx.fillStyle = bg;
+    ctx.beginPath();
+    ctx.moveTo(-bw * 0.85, -bh * 0.08);
+    ctx.bezierCurveTo(-bw * 1.02, -bh * 0.68, -bw * 0.82, -bh * 1.06, -bw * 0.4, -bh * 1.06);
+    ctx.bezierCurveTo(-bw * 0.15, -bh * 1.1, bw * 0.15, -bh * 1.1, bw * 0.4, -bh * 1.06);
+    ctx.bezierCurveTo(bw * 0.82, -bh * 1.06, bw * 1.02, -bh * 0.68, bw * 0.85, -bh * 0.08);
+    ctx.bezierCurveTo(bw * 0.6, bh * 0.06, -bw * 0.6, bh * 0.06, -bw * 0.85, -bh * 0.08);
+    ctx.closePath(); ctx.fill();
+
+    // arms — reach higher (grabbing) as the bear closes in
+    const reach = close;
+    ctx.lineCap = "round";
+    for (const side of [-1, 1]) {
+      const shX = side * bw * 0.68, shY = -bh * 0.66;
+      const handX = side * bw * (0.95 - reach * 0.55), handY = -bh * (0.82 + reach * 0.8);
+      ctx.strokeStyle = furMid; ctx.lineWidth = u * 0.58;
+      ctx.beginPath(); ctx.moveTo(shX, shY); ctx.quadraticCurveTo(side * bw * 1.12, -bh * 0.92, handX, handY); ctx.stroke();
+      // paw + claws
+      ctx.fillStyle = furDark;
+      ctx.beginPath(); ctx.arc(handX, handY, u * 0.42, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = "#efe6cf"; ctx.lineWidth = u * 0.09;
+      for (let c = -1; c <= 1; c++) {
+        ctx.beginPath();
+        ctx.moveTo(handX + c * u * 0.2, handY - u * 0.08);
+        ctx.lineTo(handX + c * u * 0.26, handY - u * 0.5);
+        ctx.stroke();
+      }
+    }
+
+    // head (raised, snarling)
+    ctx.save();
+    ctx.translate(0, -bh * 1.04);
+    const hw = bw * 0.56, hh = u * 1.0;
+    // ears
+    for (const side of [-1, 1]) {
+      ctx.fillStyle = furDark;
+      ctx.beginPath(); ctx.arc(side * hw * 0.82, -hh * 0.72, u * 0.44, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#2a1a0e";
+      ctx.beginPath(); ctx.arc(side * hw * 0.82, -hh * 0.7, u * 0.22, 0, Math.PI * 2); ctx.fill();
+    }
+    // skull
+    const hg = ctx.createLinearGradient(0, -hh, 0, hh);
+    hg.addColorStop(0, furLight); hg.addColorStop(1, furMid);
+    ctx.fillStyle = hg;
+    ctx.beginPath(); ctx.ellipse(0, 0, hw, hh, 0, 0, Math.PI * 2); ctx.fill();
+    // muzzle
+    ctx.fillStyle = "#6e5638";
+    ctx.beginPath(); ctx.ellipse(0, hh * 0.46, hw * 0.62, hh * 0.46, 0, 0, Math.PI * 2); ctx.fill();
+    // snarling mouth
+    ctx.fillStyle = "#160c06";
+    ctx.beginPath(); ctx.ellipse(0, hh * 0.66, hw * 0.42, hh * 0.22, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#fff";
+    for (let i = -1; i <= 1; i += 2) {
+      ctx.beginPath();
+      ctx.moveTo(i * hw * 0.22 - u * 0.09, hh * 0.54);
+      ctx.lineTo(i * hw * 0.22 + u * 0.09, hh * 0.54);
+      ctx.lineTo(i * hw * 0.22, hh * 0.72);
+      ctx.closePath(); ctx.fill();
+    }
+    // nose
+    ctx.fillStyle = "#140d07";
+    ctx.beginPath(); ctx.ellipse(0, hh * 0.22, u * 0.2, u * 0.14, 0, 0, Math.PI * 2); ctx.fill();
+    // angry eyes
+    for (const side of [-1, 1]) {
+      ctx.fillStyle = "#fff";
+      ctx.beginPath(); ctx.ellipse(side * hw * 0.42, -hh * 0.08, u * 0.19, u * 0.23, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#180a05";
+      ctx.beginPath(); ctx.arc(side * hw * 0.46, -hh * 0.02, u * 0.1, 0, Math.PI * 2); ctx.fill();
+    }
+    // furrowed brows
+    ctx.strokeStyle = "#160c06"; ctx.lineWidth = u * 0.17; ctx.lineCap = "round";
+    for (const side of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(side * hw * 0.16, -hh * 0.34);
+      ctx.lineTo(side * hw * 0.64, -hh * 0.16);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   function drawParticles() {
     for (const pt of game.particles) {
       if (pt.z < -CAM_BACK + 0.1) continue;
@@ -1532,6 +1679,8 @@
     lastT = now;
     if (dt > 0.05) dt = 0.05; // clamp big gaps (tab switches)
     update(dt);
+    // when the run ends, the bear lunges in to grab the bull (runs in any state)
+    if (game.dead && game.bearClose < 1) game.bearClose = Math.min(1, game.bearClose + dt * 3.5);
     render();
     requestAnimationFrame(frame);
   }
