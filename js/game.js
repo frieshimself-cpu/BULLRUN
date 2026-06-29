@@ -1134,12 +1134,17 @@
       quad(ftr, fbr, bbr, btr);
     }
 
-    // front face (skipped when the box's nose is behind the camera)
     if (!skipFront) {
+      // front face — what you see as the box approaches
       ctx.fillStyle = faceColor;
       quad(ftl, ftr, fbr, fbl);
       ctx.strokeStyle = "rgba(0,0,0,0.25)"; ctx.lineWidth = 1.5;
       ctx.stroke();
+    } else {
+      // the box's nose has slipped behind the camera — show its BACK face so it
+      // doesn't become invisible as you slide past it (esp. centred boxes)
+      ctx.fillStyle = shade(faceColor, -0.1);
+      quad(btl, btr, bbr, bbl);
     }
   }
 
@@ -1149,7 +1154,8 @@
     const p = project(x, c.y, c.z);
     if (p.s <= 0) return;
     const r = Math.max(2, (p.s / FOCAL) * 16);
-    const spin = Math.abs(Math.cos(game.dist * 2 + c.z));
+    // slow, smooth spin — the old multiplier changed ~1 rad/frame and strobed
+    const spin = Math.abs(Math.cos(game.dist * 0.3 + c.z));
     ctx.save();
     ctx.translate(p.x, p.y);
     // glow
@@ -1162,7 +1168,7 @@
     grad.addColorStop(1, "#f0a500");
     ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.ellipse(0, 0, Math.max(1, r * (0.3 + spin * 0.7)), r, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, Math.max(1, r * (0.45 + spin * 0.55)), r, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = "#b9760a"; ctx.lineWidth = Math.max(1, r * 0.16);
     ctx.stroke();
