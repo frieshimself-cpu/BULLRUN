@@ -33,6 +33,22 @@ vercel --prod         # production deploy
 
 **Or from the dashboard:** import the repo at [vercel.com/new](https://vercel.com/new) — there's nothing to configure. Framework preset is **Other**, build command **empty**, and the output is the repo root. `vercel.json` is included (clean URLs + sensible cache/security headers).
 
+### Auto-deploy on every push
+
+You have two ways to make pushes deploy automatically — pick **one**:
+
+1. **Vercel Git integration (recommended, zero secrets).** Import the repo once at [vercel.com/new](https://vercel.com/new) and connect it to GitHub. Vercel then deploys **production from `main`** and a **preview for every other branch / PR** automatically. Nothing else to set up.
+
+2. **GitHub Actions (included in this repo).** `.github/workflows/vercel-deploy.yml` runs on every push: it deploys **production from `main`/`master`** and a **preview from any other branch**. It stays green and skips itself until you add three repository secrets (**Settings → Secrets and variables → Actions**):
+
+   | Secret | Where to get it |
+   | ------ | --------------- |
+   | `VERCEL_TOKEN` | [vercel.com/account/tokens](https://vercel.com/account/tokens) |
+   | `VERCEL_ORG_ID` | run `vercel link`, then read `.vercel/project.json` |
+   | `VERCEL_PROJECT_ID` | same `.vercel/project.json` |
+
+   Use this if you'd rather keep deploys in GitHub CI. If you use the native Git integration above, you can delete this workflow to avoid double-deploys.
+
 ## Controls
 
 | Action        | Keyboard            | Touch            |

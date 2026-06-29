@@ -1,0 +1,65 @@
+name: Deploy to Vercel
+
+# Auto-deploys on every push: production from main/master, a preview from any
+# other branch. Stays green and simply skips if the Vercel secrets aren't set,
+# so it never spams failures before you've configured it.
+
+on:
+  push:
+    branches: ["**"]
+  workflow_dispatch:
+
+concurrency:
+  group: vercel-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Check for Vercel secrets
+        id: check
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "::notice::Vercel secrets not configured — skipping deploy. See the README 'Deploy to Vercel' section to add VERCEL_TOKEN, VERCEL_ORG_ID and VERCEL_PROJECT_ID."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.check.outputs.ready == 'true'
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        if: steps.check.outputs.ready == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Vercel CLI
+        if: steps.check.outputs.ready == 'true'
+        run: npm install -g vercel@latest
+
+      - name: Deploy
+        if: steps.check.outputs.ready == 'true'
+        env:
+          IS_PROD: ${{ github.ref_name == 'main' || github.ref_name == 'master' }}
+        run: |
+          if [ "$IS_PROD" = "true" ]; then
+            vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+            vercel build --prod --token="$VERCEL_TOKEN"
+            URL=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+            echo "### 🐂 BullRun deployed to production" >> "$GITHUB_STEP_SUMMARY"
+          else
+            vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+            vercel build --token="$VERCEL_TOKEN"
+            URL=$(vercel deploy --prebuilt --token="$VERCEL_TOKEN")
+            echo "### 🐂 BullRun preview deployed" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "$URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "Deployed: $URL"

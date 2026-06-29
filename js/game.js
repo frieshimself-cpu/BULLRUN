@@ -1186,9 +1186,9 @@
 
     const bodyW = 2.0 * s;
     const bodyH = 2.3 * s;
-    const hideDark = "#3a2418";        // bull hide — deep shadow brown
-    const hideMid = "#5a3a26";         // mid tone
-    const hideLight = "#7b5238";       // lit top
+    const hideDark = "#0f0f14";        // bull hide — near-black shadow
+    const hideMid = "#23232b";         // charcoal mid tone
+    const hideLight = "#3c3c48";       // lit top (kept light enough to read form)
 
     // ---- shield / hoverboard auras ----
     if (g.shieldT > 0 || g.hoverT > 0) {
@@ -1238,7 +1238,7 @@
       ctx.lineWidth = s * 0.34;
       ctx.beginPath(); ctx.moveTo(kneeX, kneeY); ctx.lineTo(footX, footY); ctx.stroke();
       // cloven hoof
-      ctx.fillStyle = "#241712";
+      ctx.fillStyle = "#060608";
       ctx.beginPath(); ctx.ellipse(footX, footY + s * 0.04, s * 0.25, s * 0.2, 0, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = "rgba(0,0,0,0.55)"; ctx.lineWidth = s * 0.055;
       ctx.beginPath(); ctx.moveTo(footX, footY - s * 0.04); ctx.lineTo(footX, footY + s * 0.2); ctx.stroke();
@@ -1257,7 +1257,7 @@
     ctx.moveTo(0, -bodyH * 0.6);
     ctx.quadraticCurveTo(tailSwing * s * 1.1, -bodyH * 0.12, ttX, ttY);
     ctx.stroke();
-    ctx.fillStyle = "#2a1a12";
+    ctx.fillStyle = "#070709";
     ctx.beginPath(); ctx.moveTo(ttX, ttY);
     ctx.quadraticCurveTo(ttX - s * 0.22, ttY + s * 0.32, ttX, ttY + s * 0.5);
     ctx.quadraticCurveTo(ttX + s * 0.22, ttY + s * 0.32, ttX, ttY); ctx.fill();
@@ -1337,7 +1337,7 @@
       ctx.rotate(sd * (0.6 + earFlap));
       ctx.fillStyle = hideMid;
       ctx.beginPath(); ctx.ellipse(0, 0, s * 0.42, s * 0.24, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = "#3a2418";
+      ctx.fillStyle = "#15151b";
       ctx.beginPath(); ctx.ellipse(s * 0.05, 0, s * 0.24, s * 0.13, 0, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     }
@@ -1360,7 +1360,7 @@
     ctx.fillStyle = hg; ctx.fill();
 
     // curly forelock between the horns
-    ctx.fillStyle = "#2f1d12";
+    ctx.fillStyle = "#08080a";
     for (let i = -1; i <= 1; i++) {
       ctx.beginPath(); ctx.arc(i * hw * 0.34, -hh * 0.95, s * 0.26, 0, Math.PI * 2); ctx.fill();
     }
@@ -1368,8 +1368,8 @@
 
     // muzzle (lighter snout)
     const mz = ctx.createLinearGradient(0, hh * 0.1, 0, hh * 1.0);
-    mz.addColorStop(0, "#9c7350");
-    mz.addColorStop(1, "#b98a63");
+    mz.addColorStop(0, "#3a3a45");
+    mz.addColorStop(1, "#50505e");
     ctx.fillStyle = mz;
     ctx.beginPath(); ctx.ellipse(0, hh * 0.5, hw * 0.72, hh * 0.5, 0, 0, Math.PI * 2); ctx.fill();
 
@@ -1396,7 +1396,7 @@
       ctx.fillStyle = "rgba(255,255,255,0.9)";
       ctx.beginPath(); ctx.arc(sd * hw * 0.46, -hh * 0.2, s * 0.04, 0, Math.PI * 2); ctx.fill();
       // brow
-      ctx.strokeStyle = "#2f1d12"; ctx.lineWidth = s * 0.16; ctx.lineCap = "round";
+      ctx.strokeStyle = "#08080a"; ctx.lineWidth = s * 0.16; ctx.lineCap = "round";
       ctx.beginPath();
       ctx.moveTo(sd * hw * 0.22, -hh * 0.42);
       ctx.lineTo(sd * hw * 0.66, -hh * 0.3);
