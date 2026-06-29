@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Bull Run — Endless Runner</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="game-wrap">
+    <canvas id="game"></canvas>
+
+    <!-- Heads-up display -->
+    <div id="hud" class="hidden">
+      <div class="hud-left">
+        <div class="hud-pill">
+          <span class="ico coin-ico"></span>
+          <span id="coins">0</span>
+        </div>
+        <div class="hud-pill">
+          <span class="ico score-ico"></span>
+          <span id="score">0</span>
+        </div>
+      </div>
+      <div class="hud-right">
+        <button id="pause-btn" class="icon-btn" title="Pause (P)">❚❚</button>
+        <button id="mute-btn" class="icon-btn" title="Mute (M)">♪</button>
+      </div>
+      <div id="powerup-bar"></div>
+    </div>
+
+    <!-- Start screen -->
+    <div id="start-screen" class="overlay">
+      <div class="panel">
+        <h1 class="logo">BULL<span>RUN</span></h1>
+        <p class="tagline">An endless runner. You are the bull. <em>Charge.</em></p>
+        <button id="play-btn" class="big-btn">▶ PLAY</button>
+        <div class="controls-help">
+          <div><b>← →</b> or swipe&nbsp;— change lane</div>
+          <div><b>↑</b> / Space or swipe up — jump</div>
+          <div><b>↓</b> or swipe down — roll</div>
+          <div><b>P</b> pause &nbsp;·&nbsp; <b>M</b> mute</div>
+        </div>
+        <div class="best-line">Best: <span id="start-best">0</span></div>
+      </div>
+    </div>
+
+    <!-- Pause screen -->
+    <div id="pause-screen" class="overlay hidden">
+      <div class="panel">
+        <h2>Paused</h2>
+        <button id="resume-btn" class="big-btn">Resume</button>
+        <button id="quit-btn" class="ghost-btn">Quit to menu</button>
+      </div>
+    </div>
+
+    <!-- Game over screen -->
+    <div id="over-screen" class="overlay hidden">
+      <div class="panel">
+        <h2>Wiped Out!</h2>
+        <div class="result-grid">
+          <div><span class="r-label">Score</span><span id="final-score" class="r-val">0</span></div>
+          <div><span class="r-label">Coins</span><span id="final-coins" class="r-val">0</span></div>
+          <div><span class="r-label">Best</span><span id="final-best" class="r-val">0</span></div>
+        </div>
+        <div id="new-best" class="new-best hidden">★ New Best! ★</div>
+        <button id="again-btn" class="big-btn">↺ Run Again</button>
+        <button id="menu-btn" class="ghost-btn">Menu</button>
+      </div>
+    </div>
+
+    <!-- Touch hint -->
+    <div id="orientation-hint" class="hidden">Rotate for a wider view 🐂</div>
+  </div>
+
+  <script src="js/game.js"></script>
+</body>
+</html>
