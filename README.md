@@ -40,8 +40,10 @@ No build step, no dependencies. Either:
   - 🛹 **hoverboard** — survive a crash and keep charging
   - 👟 **super sneakers** — sky-high jumps
   - 🧲 coin magnet · ×2 score multiplier · 🛡 shield
-- **Juice:** camera shake, hit flash, particle bursts, jet exhaust, ramping speed/difficulty.
-- **Persistent best score** (saved in `localStorage`), pause-on-blur, mute, and full touch + keyboard support.
+- **Living world** — a full **day → dusk → night → dawn cycle** as you run: shifting sky gradients, a sun that sets into a cratered moon, stars, and city windows that light up after dark.
+- **Combos & milestones** — chained coin pickups build a score multiplier (×2, ×3…), distance milestones pay out bonuses, and floating pop-ups call out power-ups, combos and milestones.
+- **Juice:** camera shake, hit flash, particle bursts, jet exhaust, speed lines and a vignette at high velocity, ramping difficulty.
+- **Progression:** a persistent **coin bank** and **best score** (saved in `localStorage`), shown on the menu. Pause-on-blur, mute, full touch + keyboard support.
 
 ## Project layout
 

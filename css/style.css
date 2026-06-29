@@ -185,6 +185,15 @@ h2 { font-size: clamp(28px, 7vmin, 46px); margin-bottom: 18px; color: var(--gold
 }
 .ghost-btn:active { transform: scale(0.95); }
 
+.coin-dot {
+  display: inline-block;
+  width: 14px; height: 14px;
+  vertical-align: -2px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff6c4, #ffd23f 55%, #f0a500);
+  box-shadow: inset 0 0 0 1.5px #b9760a;
+}
+
 .controls-help {
   margin-top: 22px;
   font-size: clamp(12px, 2.6vmin, 15px);
