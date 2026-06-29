@@ -26,7 +26,12 @@
     startBest: document.getElementById("start-best"),
     startCoins: document.getElementById("start-coins"),
     newBest: document.getElementById("new-best"),
+    rektMsg: document.getElementById("rekt-msg"),
   };
+  const REKT_MSGS = [
+    "Caught by the bear market 🐻", "NGMI 📉", "Paper hands!", "Rugged.",
+    "The dump got you.", "Should've taken profits.", "Down bad.", "Liquidated. 💀",
+  ];
 
   // Logical resolution (we render at this and CSS-scale to fit).
   let W = 480, H = 800, DPR = 1;
@@ -386,6 +391,7 @@
     els.finalScore.textContent = fmt(sc);
     els.finalCoins.textContent = fmt(game.coins);
     els.finalBest.textContent = fmt(best);
+    els.rektMsg.textContent = REKT_MSGS[(Math.random() * REKT_MSGS.length) | 0];
     show(els.newBest, isBest);
     emit("gameover", { score: sc, coins: game.coins, best, isBest });
     setTimeout(() => { show(els.over, true); }, 650);
@@ -545,13 +551,13 @@
         g.score += 10 * (g.multiplierT > 0 ? 2 : 1) * comboMul;
         Sound.coin();
         spawnSpark(cWorldX, c.y, 0, "rgba(255,210,63,");
-        if (g.combo > 0 && g.combo % 10 === 0) popup("COMBO ×" + (comboMul), "#ffd23f");
+        if (g.combo > 0 && g.combo % 10 === 0) popup("PUMP ×" + comboMul + " 📈", "#ffd23f");
       }
     }
 
     // ---- power-up pickup ----
-    const PU_NAMES = { jetpack: "🚀 JETPACK!", hoverboard: "🛹 HOVERBOARD!", sneakers: "👟 SUPER JUMP!",
-                       magnet: "🧲 MAGNET!", multiplier: "×2 SCORE!", shield: "🛡 SHIELD!" };
+    const PU_NAMES = { jetpack: "🚀 LIFTOFF!", hoverboard: "🛹 HODL MODE!", sneakers: "👟 LEVERAGE!",
+                       magnet: "🧲 BUY THE DIP!", multiplier: "×2 LFG!", shield: "🛡 DIAMOND HANDS!" };
     for (const p of g.powerups) {
       if (p.got) continue;
       p.spin += dt * 4;
@@ -620,12 +626,15 @@
     // combo timeout
     if (g.comboTimer > 0) { g.comboTimer -= dt; if (g.comboTimer <= 0) g.combo = 0; }
 
-    // distance milestones
+    // distance milestones — memecoin hype
     const meters = Math.floor(g.dist);
     if (meters >= g.nextMilestone) {
       const bonus = Math.floor(g.nextMilestone / 5);
       g.score += bonus;
-      popup(g.nextMilestone + "m  +" + bonus, "#9affd0", true);
+      const slang = ["WAGMI 🚀", "TO THE MOON 🌕", "NEW ATH 📈", "DIAMOND HANDS 💎", "LFG 🔥", "FEW UNDERSTAND", "PROBABLY NOTHING"];
+      const idx = (g.nextMilestone / 500 - 1) % slang.length;
+      popup(slang[idx], "#9affd0", true);
+      popup("+" + bonus + " · " + g.nextMilestone + "m", "#ffd23f");
       g.nextMilestone += 500;
     }
 
@@ -718,8 +727,16 @@
     draws.sort((a, b) => b.z - a.z);
 
     for (const d of draws) {
-      if (d.kind === "ob") drawObstacle(d.o);
-      else if (d.kind === "coin") drawCoin(d.o);
+      if (d.kind === "ob") {
+        // fade an obstacle out over its last stretch before it's culled, so it
+        // never hard-pops as it slips past the camera
+        const o = d.o;
+        const fade = clamp((o.z + (o.len || 1) - Z_NEAR) / 1.2, 0, 1);
+        if (fade <= 0.01) continue;
+        ctx.globalAlpha = fade;
+        drawObstacle(o);
+        ctx.globalAlpha = 1;
+      } else if (d.kind === "coin") drawCoin(d.o);
       else if (d.kind === "pu") drawPowerup(d.o);
       else if (d.kind === "player") drawBull();
     }
@@ -813,8 +830,9 @@
   function withA(rgb, a) { return rgb.replace("rgb(", "rgba(").replace(")", `,${a})`); }
   const env = { top: "#3f8ee6", bot: "#cdeaff", sun: "#fff6c8", sunY: 0.30, dark: 0, amb: "rgba(0,0,0,0)" };
   function updateEnv() {
-    const period = 1500;
-    const p = ((game.dist / period) % 1 + 1) % 1;
+    const period = 1800;
+    // offset so a fresh run STARTS in bright daytime, then drifts dusk -> night -> dawn
+    const p = ((game.dist / period) + 0.26) % 1;
     let i0 = 0;
     for (let i = 0; i < SKY_KEYS.length; i++) if (SKY_KEYS[i].at <= p) i0 = i;
     const i1 = (i0 + 1) % SKY_KEYS.length;
@@ -829,7 +847,8 @@
     const ar = Math.round(lerp(k0.amb[0], k1.amb[0], t));
     const ag = Math.round(lerp(k0.amb[1], k1.amb[1], t));
     const ab = Math.round(lerp(k0.amb[2], k1.amb[2], t));
-    env.amb = `rgba(${ar},${ag},${ab},${(env.dark * 0.42).toFixed(3)})`;
+    // a gentle tint, not a heavy wash (kept low so the scene never looks muddy)
+    env.amb = `rgba(${ar},${ag},${ab},${(env.dark * 0.24).toFixed(3)})`;
   }
 
   // sky gradient + sun/moon + stars + parallax clouds

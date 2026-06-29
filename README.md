@@ -98,14 +98,14 @@ Scores are stored as a sorted set keeping each tag's best. They're **client-repo
   - `ROLL` overhead bars — slide under them
   - solid blockers — switch tracks
   - **subway trains** — switch away **or jump on top and ride the roof** (with a coin trail up there for the brave)
-- **Memecoin flavour** — a pumping **`$BULLRUN ▲ +%`** ticker that climbs the further you run, `$` token coins, a **REKT!** game-over, and **airdrop** banners teasing that top runners on the leaderboard get the supply drop.
+- **Memecoin flavour** — a pumping **`$BULLRUN ▲ +%`** ticker, `$` token coins, memecoin-slang pop-ups (PUMP combos, WAGMI / to-the-moon milestones, themed power-ups like 🚀 LIFTOFF and 💎 DIAMOND HANDS), a **REKT!** game-over with a rotating rekt-reason, and **airdrop** banners.
 - **Coins** in arcs and trails, with a satisfying spin + pickup spark.
 - **Power-ups:**
   - 🚀 **jetpack** — blast above everything on a stream of coins
   - 🛹 **hoverboard** — survive a crash and keep charging
   - 👟 **super sneakers** — sky-high jumps
   - 🧲 coin magnet · ×2 score multiplier · 🛡 shield
-- **Living world** — a full **day → dusk → night → dawn cycle** as you run: shifting sky gradients, a sun that sets into a cratered moon, stars, and city windows that light up after dark.
+- **Living world** — a **day → dusk → night → dawn cycle** that starts in bright daylight and drifts through the day as you run (soft colour grade, never a muddy wash): shifting sky gradients, a sun that sets into a cratered moon, stars, and city windows that light up after dark.
 - **Combos & milestones** — chained coin pickups build a score multiplier (×2, ×3…), distance milestones pay out bonuses, and floating pop-ups call out power-ups, combos and milestones.
 - **Juice:** camera shake, hit flash, particle bursts, jet exhaust, speed lines and a vignette at high velocity, ramping difficulty.
 - **Progression:** a persistent **coin bank** and **best score** (saved in `localStorage`), shown on the menu. Pause-on-blur, mute, full touch + keyboard support.

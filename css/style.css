@@ -270,6 +270,12 @@ h2 { font-size: clamp(28px, 7cqmin, 46px); margin-bottom: 18px; color: var(--gol
   font-weight: bold;
   color: #9affd0;
 }
+.rekt-msg {
+  margin: -4px 0 14px;
+  font-size: clamp(13px, 2.9cqmin, 16px);
+  font-weight: bold;
+  color: var(--accent);
+}
 
 /* ---------- contract / token box ---------- */
 .ca-box {
