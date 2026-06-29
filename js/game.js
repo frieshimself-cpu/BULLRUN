@@ -437,6 +437,7 @@
 
   // --------------------------------------------------------------- update
   let lastT = performance.now();
+  let scoreAccum = 0, tickerAccum = 0;   // throttle fast-changing HUD numbers
 
   function update(dt) {
     if (state !== State.PLAY) return;
@@ -648,21 +649,29 @@
     if (g.flash > 0) g.flash = Math.max(0, g.flash - dt * 2);
     if (g.hurtFlash > 0) g.hurtFlash = Math.max(0, g.hurtFlash - dt * 1.5);
 
-    // HUD
+    // HUD — coins update on pickup (no flicker); the score and the ticker
+    // change every frame, so throttle them or the digits strobe at 60fps
     els.coins.textContent = fmt(g.coins);
-    els.score.textContent = fmt(Math.floor(g.score));
-    // ticker: real $BULLRUN 24h move once the coin is tradeable, otherwise a
-    // gameplay "pump" that climbs with distance
-    const tok = window.BULLRUN_TOKEN;
-    if (tok && tok.live && isFinite(tok.change24h)) {
-      const up = tok.change24h >= 0;
-      els.tickerPct.textContent = (up ? "▲ +" : "▼ ") + tok.change24h.toFixed(1) + "%";
-      els.tickerPct.classList.toggle("down", !up);
-    } else {
-      els.tickerPct.textContent = "▲ +" + fmt(Math.floor(g.dist * 1.4 + g.coins * 8)) + "%";
-      els.tickerPct.classList.remove("down");
+    scoreAccum += dt; tickerAccum += dt;
+    if (scoreAccum >= 0.12) {
+      scoreAccum = 0;
+      els.score.textContent = fmt(Math.floor(g.score));
+      updatePowerupBar();
     }
-    updatePowerupBar();
+    if (tickerAccum >= 0.5) {
+      tickerAccum = 0;
+      // real $BULLRUN 24h move once the coin is tradeable, else a gameplay
+      // "pump" that climbs slowly with distance
+      const tok = window.BULLRUN_TOKEN;
+      if (tok && tok.live && isFinite(tok.change24h)) {
+        const up = tok.change24h >= 0;
+        els.tickerPct.textContent = (up ? "▲ +" : "▼ ") + tok.change24h.toFixed(1) + "%";
+        els.tickerPct.classList.toggle("down", !up);
+      } else {
+        els.tickerPct.textContent = "▲ +" + fmt(Math.floor(g.dist * 1.4 + g.coins * 8)) + "%";
+        els.tickerPct.classList.remove("down");
+      }
+    }
   }
 
   function caughtByBear() {
