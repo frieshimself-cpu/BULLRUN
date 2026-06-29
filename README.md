@@ -64,10 +64,11 @@ You have two ways to make pushes deploy automatically — pick **one**:
 - **Pseudo-3D railway** — a real perspective-projection renderer (no libraries): three tracks converging to a vanishing point, a gravel bed with scrolling wooden sleepers and steel rails, a passing **city skyline** with lit windows, parallax clouds and a sun. The camera rises with the bull so jumps and roof-rides read clearly.
 - **A hand-coded bull** — muscular haunches, curving ivory horns, animated gallop, plus distinct **jump-tuck** and **roll-squash** poses, a swishing tail, dust kick-ups and angry snorts at speed.
 - **Obstacles**, procedurally arranged into *always-solvable* patterns:
-  - `JUMP` low barriers — leap them
+  - 🔴 **red (bearish) candlesticks** — the bull leaps over them
   - `ROLL` overhead bars — slide under them
   - solid blockers — switch tracks
   - **subway trains** — switch away **or jump on top and ride the roof** (with a coin trail up there for the brave)
+- **Airdrop hype** — menu and game-over banners tease that top runners on the leaderboard get supply airdrops.
 - **Coins** in arcs and trails, with a satisfying spin + pickup spark.
 - **Power-ups:**
   - 🚀 **jetpack** — blast above everything on a stream of coins

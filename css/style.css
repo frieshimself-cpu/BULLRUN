@@ -212,6 +212,42 @@ h2 { font-size: clamp(28px, 7cqmin, 46px); margin-bottom: 18px; color: var(--gol
 }
 .ghost-btn:active { transform: scale(0.95); }
 
+.airdrop-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  margin: 0 auto 20px;
+  max-width: 94%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: linear-gradient(100deg, rgba(154, 255, 208, 0.16), rgba(255, 210, 63, 0.16));
+  border: 1.5px solid rgba(154, 255, 208, 0.55);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2) inset, 0 6px 18px rgba(0, 0, 0, 0.25);
+  font-size: clamp(12px, 2.5cqmin, 15px);
+  line-height: 1.35;
+  color: #e6fff2;
+  animation: dropglow 2.4s ease-in-out infinite;
+}
+.airdrop-banner b { color: #9affd0; }
+.airdrop-banner .drop-ico {
+  font-size: 1.5em;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4));
+  animation: dropfloat 2.4s ease-in-out infinite;
+}
+@keyframes dropglow {
+  50% { border-color: rgba(255, 210, 63, 0.75); box-shadow: 0 0 18px rgba(154, 255, 208, 0.3), 0 6px 18px rgba(0, 0, 0, 0.25); }
+}
+@keyframes dropfloat {
+  50% { transform: translateY(-3px) rotate(-6deg); }
+}
+.airdrop-note {
+  margin: 4px 0 16px;
+  font-size: clamp(12px, 2.6cqmin, 15px);
+  font-weight: bold;
+  color: #9affd0;
+}
+
 .coin-dot {
   display: inline-block;
   width: 14px; height: 14px;

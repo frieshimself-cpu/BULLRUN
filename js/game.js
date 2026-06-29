@@ -936,6 +936,8 @@
   }
 
   // ----- obstacle drawing as shaded 3D boxes -----
+  // obstacle types: LOW = red candlestick (jump), HIGH = bar (roll),
+  // FULL = wall (switch), TRAIN = subway car (switch / ride the roof)
   function drawObstacle(o) {
     const x = laneX(o.lane);
     const half = 0.62;
@@ -958,6 +960,31 @@
       drawBox(x + half, 0, h, 0.12, zFront, zFront + 0.2, "#3a2f5a", "#4a3f6a");
       drawBox(x, h - 0.55, 0.55, half, zFront, zBack, color, topColor);
       drawSignText(x, h - 0.28, zFront, "ROLL");
+      return;
+    }
+
+    if (o.type === OB.LOW) {
+      // a red (bearish) candlestick — jump it
+      const cHalf = 0.4, cH = 0.9;
+      const midZ = (zFront + zBack) / 2;
+      // upper wick (thin centre line above the body)
+      const wTop = project(x, cH + 0.62, midZ), wHi = project(x, cH, midZ);
+      if (wHi.s > 0) {
+        ctx.strokeStyle = "#5e1411"; ctx.lineCap = "round";
+        ctx.lineWidth = Math.max(1.6, (wHi.s / FOCAL) * 7);
+        ctx.beginPath(); ctx.moveTo(wHi.x, wHi.y); ctx.lineTo(wTop.x, wTop.y); ctx.stroke();
+      }
+      // body
+      drawBox(x, 0, cH, cHalf, zFront, zBack, "#e23630", "#ff6a60", noseBehind);
+      // glossy highlight down the lit face
+      if (!noseBehind) {
+        const gA = project(x - cHalf * 0.5, cH * 0.92, zFront), gB = project(x - cHalf * 0.5, cH * 0.12, zFront);
+        if (gA.s > 0) {
+          ctx.strokeStyle = "rgba(255,255,255,0.18)"; ctx.lineWidth = Math.max(1.5, (gA.s / FOCAL) * 6);
+          ctx.beginPath(); ctx.moveTo(gA.x, gA.y); ctx.lineTo(gB.x, gB.y); ctx.stroke();
+        }
+      }
+      drawSignText(x, cH + 0.9, zFront, "JUMP");
       return;
     }
 
@@ -997,7 +1024,6 @@
         ctx.beginPath(); ctx.arc(hl.x, hl.y, Math.max(2, (hl.s / FOCAL) * 9), 0, Math.PI * 2); ctx.fill();
       }
     }
-    if (o.type === OB.LOW) drawSignText(x, h + 0.25, zFront, "JUMP");
   }
 
   function drawSignText(x, y, z, text) {
@@ -1160,12 +1186,16 @@
       stretch = 1.05;
       lean = clamp(-g.vy * 0.02, -0.3, 0.3);
     }
-    // subtle bob while running
-    if (!g.jumping && !g.rolling) bodyY = Math.abs(gallop) * s * 0.18;
+    // gallop bounce + fore-aft pitch so the run reads dynamically
+    let pitch = 0;
+    if (!g.jumping && !g.rolling) {
+      bodyY = Math.abs(gallop) * s * 0.24;
+      pitch = Math.sin(run + 0.6) * 0.05;
+    }
 
     ctx.save();
     ctx.translate(cx, cy + bodyY);
-    ctx.rotate(lean * 0.2);
+    ctx.rotate(lean * 0.2 + pitch);
 
     // ---- ground shadow ----
     ctx.save();
@@ -1220,33 +1250,45 @@
       ctx.restore();
     }
 
-    // ---- back legs (animated gallop, with thigh / shin / cloven hoof) ----
-    function leg(side, swing) {
-      const hipX = side * bodyW * 0.36;
-      const hipY = -bodyH * 0.12;
-      const kneeX = hipX + side * s * 0.05 - swing * s * 0.18;
-      const kneeY = hipY + s * (0.66 + Math.max(0, -swing) * 0.1);
-      const footX = hipX + side * s * 0.02 + swing * s * 0.62;
-      const footY = hipY + s * (1.5 + Math.max(0, swing) * 0.16) - Math.max(0, -swing) * s * 0.25;
+    // ---- legs: a 4-beat gallop that pumps UNDER the body (near + far pairs) ----
+    // swing in [-1,1]: +1 = hoof lifted in recovery, -1 = leg planted/extended
+    function leg(side, swing, near) {
+      const spread = near ? 0.34 : 0.2;
+      const hipX = side * bodyW * spread;
+      const hipY = bodyH * (near ? 0.0 : -0.06);
+      const lift = Math.max(0, swing);
+      const reach = -Math.min(0, swing);
+      const footX = hipX - side * s * 0.02;                          // stays tucked under hip
+      const footY = hipY + s * ((near ? 1.22 : 1.0) - lift * (near ? 0.62 : 0.46) + reach * 0.06);
+      const kneeX = hipX + side * s * 0.14;
+      const kneeY = hipY + s * (0.62 - lift * 0.12);
       ctx.lineCap = "round"; ctx.lineJoin = "round";
-      // thigh (thick, muscular)
-      ctx.strokeStyle = hideDark;
-      ctx.lineWidth = s * 0.52;
-      ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(kneeX, kneeY); ctx.stroke();
-      // shin (tapered)
-      ctx.strokeStyle = hideMid;
-      ctx.lineWidth = s * 0.34;
+      // thigh
+      ctx.strokeStyle = near ? hideMid : hideDark;
+      ctx.lineWidth = s * (near ? 0.48 : 0.38);
+      ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.quadraticCurveTo(kneeX, kneeY, footX, footY); ctx.stroke();
+      // shin
+      ctx.strokeStyle = near ? hideDark : "#09090d";
+      ctx.lineWidth = s * (near ? 0.3 : 0.24);
       ctx.beginPath(); ctx.moveTo(kneeX, kneeY); ctx.lineTo(footX, footY); ctx.stroke();
       // cloven hoof
-      ctx.fillStyle = "#060608";
-      ctx.beginPath(); ctx.ellipse(footX, footY + s * 0.04, s * 0.25, s * 0.2, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = "rgba(0,0,0,0.55)"; ctx.lineWidth = s * 0.055;
-      ctx.beginPath(); ctx.moveTo(footX, footY - s * 0.04); ctx.lineTo(footX, footY + s * 0.2); ctx.stroke();
+      ctx.fillStyle = near ? "#060608" : "#040406";
+      ctx.beginPath(); ctx.ellipse(footX, footY + s * 0.03, s * (near ? 0.23 : 0.19), s * (near ? 0.18 : 0.15), 0, 0, Math.PI * 2); ctx.fill();
+      if (near) {
+        ctx.strokeStyle = "rgba(0,0,0,0.5)"; ctx.lineWidth = s * 0.05;
+        ctx.beginPath(); ctx.moveTo(footX, footY - s * 0.02); ctx.lineTo(footX, footY + s * 0.18); ctx.stroke();
+      }
     }
-    const swingL = g.jumping ? -0.55 : gallop;
-    const swingR = g.jumping ? -0.45 : gallop2;
-    leg(-1, swingL);
-    leg(1, swingR);
+    if (g.jumping) {
+      // all four tucked up for the leap
+      leg(-1, 0.6, false); leg(1, 0.5, false);
+      leg(-1, 0.7, true); leg(1, 0.55, true);
+    } else {
+      const g1 = Math.sin(run), g2 = Math.sin(run + 2.1);
+      const g3 = Math.sin(run + Math.PI), g4 = Math.sin(run + Math.PI + 2.1);
+      leg(-1, g3, false); leg(1, g4, false);   // far pair (behind, darker)
+      leg(-1, g1, true);  leg(1, g2, true);     // near pair (front, lit)
+    }
 
     // ---- tail with a tuft ----
     ctx.save();
@@ -1266,11 +1308,11 @@
     // ---- body: muscular rump tapering up to the shoulders ----
     const bw = bodyW, bh = bodyH;
     ctx.beginPath();
-    ctx.moveTo(-bw * 0.96, -bh * 0.18);
-    ctx.bezierCurveTo(-bw * 1.06, -bh * 0.78, -bw * 0.72, -bh * 1.18, -bw * 0.34, -bh * 1.22);
-    ctx.bezierCurveTo(-bw * 0.12, -bh * 1.26, bw * 0.12, -bh * 1.26, bw * 0.34, -bh * 1.22);
-    ctx.bezierCurveTo(bw * 0.72, -bh * 1.18, bw * 1.06, -bh * 0.78, bw * 0.96, -bh * 0.18);
-    ctx.bezierCurveTo(bw * 0.78, bh * 0.16, -bw * 0.78, bh * 0.16, -bw * 0.96, -bh * 0.18);
+    ctx.moveTo(-bw * 0.78, -bh * 0.2);
+    ctx.bezierCurveTo(-bw * 0.9, -bh * 0.82, -bw * 0.6, -bh * 1.2, -bw * 0.3, -bh * 1.24);
+    ctx.bezierCurveTo(-bw * 0.1, -bh * 1.28, bw * 0.1, -bh * 1.28, bw * 0.3, -bh * 1.24);
+    ctx.bezierCurveTo(bw * 0.6, -bh * 1.2, bw * 0.9, -bh * 0.82, bw * 0.78, -bh * 0.2);
+    ctx.bezierCurveTo(bw * 0.64, bh * 0.14, -bw * 0.64, bh * 0.14, -bw * 0.78, -bh * 0.2);
     ctx.closePath();
     const bodyGrad = ctx.createLinearGradient(0, -bh * 1.25, 0, bh * 0.15);
     bodyGrad.addColorStop(0, hideLight);
