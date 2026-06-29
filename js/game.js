@@ -660,15 +660,16 @@
     }
     if (tickerAccum >= 0.5) {
       tickerAccum = 0;
-      // real $BULLRUN 24h move once the coin is tradeable, else a gameplay
-      // "pump" that climbs slowly with distance
+      // Show the REAL $BULLRUN 24h move once the coin is tradeable (this only
+      // changes every ~30s on the data poll). Until then show a STATIC label —
+      // the old per-frame "pump %" was a flickering number over the sky.
       const tok = window.BULLRUN_TOKEN;
       if (tok && tok.live && isFinite(tok.change24h)) {
         const up = tok.change24h >= 0;
         els.tickerPct.textContent = (up ? "▲ +" : "▼ ") + tok.change24h.toFixed(1) + "%";
         els.tickerPct.classList.toggle("down", !up);
       } else {
-        els.tickerPct.textContent = "▲ +" + fmt(Math.floor(g.dist * 1.4 + g.coins * 8)) + "%";
+        els.tickerPct.textContent = "▲ LFG";
         els.tickerPct.classList.remove("down");
       }
     }
