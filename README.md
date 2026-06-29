@@ -15,6 +15,24 @@ No build step, no dependencies. Either:
   # then visit http://localhost:8000
   ```
 
+On a big screen the game presents itself as a centered portrait "card" with a backdrop; on phones it fills the whole screen. The in-game UI scales to the card, not the monitor.
+
+## Deploy to Vercel
+
+It's a fully static site (no build step, no dependencies), so deploying is instant.
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/frieshimself-cpu/bullrun)
+
+**Or from the CLI:**
+
+```bash
+npm i -g vercel       # once
+vercel                # preview deploy from the project root
+vercel --prod         # production deploy
+```
+
+**Or from the dashboard:** import the repo at [vercel.com/new](https://vercel.com/new) — there's nothing to configure. Framework preset is **Other**, build command **empty**, and the output is the repo root. `vercel.json` is included (clean URLs + sensible cache/security headers).
+
 ## Controls
 
 | Action        | Keyboard            | Touch            |
