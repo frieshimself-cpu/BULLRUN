@@ -1,8 +1,8 @@
-# 🐂 Bull Run
+# 🐂 BullRun
 
-An endless runner in the spirit of lane-based "subway runner" games — **but you're a charging bull.** Dodge between three lanes, leap over barriers, roll under bars, scoop up coins, and grab power-ups while the world scrolls faster and faster.
+A lane-based endless runner set on the railways — **you're a charging bull.** Weave between three tracks, leap over barriers, roll under them, jump onto and ride the roofs of subway trains, scoop up coins, and grab power-ups while the world scrolls faster and faster.
 
-> **Note on originality:** *Subway Surfers* is a trademark of SYBO Games and its art/characters/branding are copyrighted. This is **not** a copy of that game's assets. Bull Run is an original, from-scratch take on the same *genre* — every visual is drawn procedurally in code (no ripped sprites, no third-party assets) and the star is an original cartoon bull.
+> **Note on originality:** *Subway Surfers* is a trademark of SYBO Games and its art, characters, and branding are copyrighted. BullRun is **not** a copy of that game's assets — it's an original, from-scratch game in the same *genre*. Every visual is drawn procedurally in code (no ripped sprites, no third-party assets) and the star is an original cartoon bull.
 
 ## Play it
 
@@ -27,16 +27,20 @@ No build step, no dependencies. Either:
 
 ## Features
 
-- **Pseudo-3D perspective track** — a real perspective-projection renderer (no libraries), with three lanes converging to a vanishing point, scrolling lane markers, roadside posts, parallax clouds and a sun.
-- **A hand-coded bull** — muscular haunches, curving ivory horns, animated gallop cycle, plus distinct **jump-tuck** and **roll-squash** poses, a swishing tail, dust kick-ups and angry snorts at speed.
-- **Four obstacle types**, all procedurally arranged into *always-solvable* patterns:
+- **Pseudo-3D railway** — a real perspective-projection renderer (no libraries): three tracks converging to a vanishing point, a gravel bed with scrolling wooden sleepers and steel rails, a passing **city skyline** with lit windows, parallax clouds and a sun. The camera rises with the bull so jumps and roof-rides read clearly.
+- **A hand-coded bull** — muscular haunches, curving ivory horns, animated gallop, plus distinct **jump-tuck** and **roll-squash** poses, a swishing tail, dust kick-ups and angry snorts at speed.
+- **Obstacles**, procedurally arranged into *always-solvable* patterns:
   - `JUMP` low barriers — leap them
   - `ROLL` overhead bars — slide under them
-  - full blockers — switch lanes
-  - long trains — get out of the lane
+  - solid blockers — switch tracks
+  - **subway trains** — switch away **or jump on top and ride the roof** (with a coin trail up there for the brave)
 - **Coins** in arcs and trails, with a satisfying spin + pickup spark.
-- **Power-ups:** 🧲 coin magnet, ×2 score multiplier, 🛡 shield (survives one hit).
-- **Juice:** camera shake, hit flash, particle bursts, increasing speed/difficulty.
+- **Power-ups:**
+  - 🚀 **jetpack** — blast above everything on a stream of coins
+  - 🛹 **hoverboard** — survive a crash and keep charging
+  - 👟 **super sneakers** — sky-high jumps
+  - 🧲 coin magnet · ×2 score multiplier · 🛡 shield
+- **Juice:** camera shake, hit flash, particle bursts, jet exhaust, ramping speed/difficulty.
 - **Persistent best score** (saved in `localStorage`), pause-on-blur, mute, and full touch + keyboard support.
 
 ## Project layout
