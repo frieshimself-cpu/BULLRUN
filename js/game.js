@@ -185,16 +185,10 @@
   }
 
   // floating screen-space text (combos, power-up names, milestones)
-  function popup(text, color, big) {
-    // stack new popups above any still on screen so they never overlap
-    const stackY = H * 0.4 - game.popups.length * (H * 0.045);
-    game.popups.push({
-      text, color: color || "#ffd23f",
-      x: W * 0.5, y: stackY,
-      vy: -0.45, life: big ? 1.6 : 1.1, max: big ? 1.6 : 1.1,
-      size: big ? 1 : 0.6,
-    });
-  }
+  // Floating center-screen pop-ups are intentionally disabled — they cluttered
+  // the middle of the track. Combo/milestone/power-up effects still apply; the
+  // memecoin flavour lives in the ticker, banners and the game-over screen.
+  function popup() { /* no-op */ }
 
   let best = 0, coinBank = 0;
   try { best = parseInt(localStorage.getItem("bullrun_best") || "0", 10) || 0; } catch (e) {}
@@ -1342,7 +1336,7 @@
       if (pt.z < -CAM_BACK + 0.1) continue;
       const p = project(pt.x, pt.y, pt.z);
       if (p.s <= 0) continue;
-      const r = Math.max(1, pt.r * (p.s / FOCAL) * 3.2);
+      const r = Math.min(16, Math.max(1, pt.r * (p.s / FOCAL) * 3.2));
       const a = clamp(pt.life / pt.max, 0, 1);
       ctx.fillStyle = pt.c + (a * 0.9).toFixed(2) + ")";
       ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
