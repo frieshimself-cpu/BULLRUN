@@ -922,10 +922,12 @@
     ctx.moveTo(lf.x, lf.y); ctx.lineTo(rf.x, rf.y); ctx.lineTo(rn.x, rn.y); ctx.lineTo(ln.x, ln.y);
     ctx.closePath(); ctx.fill();
 
-    // wooden sleepers (ties), scrolling toward the camera
+    // wooden sleepers (ties), scrolling toward the camera. Only drawn within a
+    // capped distance and faded in near that cap — far sleepers are sub-pixel
+    // and used to shimmer/flicker at the vanishing point.
     const tiePhase = game.dist % 1.4;
-    ctx.fillStyle = "#46321f";
-    for (let z = Z_FAR; z > Z_NEAR; z -= 1.4) {
+    const TIE_FAR = 26;
+    for (let z = TIE_FAR; z > Z_NEAR; z -= 1.4) {
       const zz = z - tiePhase;
       if (zz < Z_NEAR) continue;
       const a = project(-BED_HALF * 0.95, 0.02, zz);
@@ -933,6 +935,8 @@
       const c = project(BED_HALF * 0.95, 0.02, zz - 0.45);
       const d = project(-BED_HALF * 0.95, 0.02, zz - 0.45);
       if (a.s <= 0) continue;
+      const fade = clamp((TIE_FAR - zz) / 8, 0, 1);
+      ctx.fillStyle = `rgba(70,50,31,${fade.toFixed(2)})`;
       ctx.beginPath();
       ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(c.x, c.y); ctx.lineTo(d.x, d.y);
       ctx.closePath(); ctx.fill();
@@ -954,6 +958,14 @@
         ctx.beginPath(); ctx.moveTo(f1.x, f1.y); ctx.lineTo(n1.x, n1.y); ctx.stroke();
       }
     }
+
+    // horizon haze — a soft band at the vanishing point that blends the far
+    // tracks/rails into the distance so they don't shimmer at the top middle
+    const haze = ctx.createLinearGradient(0, horizon - 4, 0, horizon + 60);
+    haze.addColorStop(0, withA(env.bot, 0.85));
+    haze.addColorStop(1, withA(env.bot, 0));
+    ctx.fillStyle = haze;
+    ctx.fillRect(0, horizon - 4, W, 64);
   }
 
   // hashless deterministic pseudo-random for stable scenery
@@ -1046,7 +1058,9 @@
 
     drawBox(x, 0, h, half, zFront, zBack, color, topColor, noseBehind);
 
-    if (o.type === OB.TRAIN) {
+    if (o.type === OB.TRAIN && zFront < 22) {
+      // fine detail (windows / roof lines) only up close — far away these are
+      // sub-pixel and flicker at the vanishing point
       // windows on whichever side faces the camera (none for a centered car)
       const winX = x > 0.15 ? x - half : (x < -0.15 ? x + half : null);
       if (winX !== null) {
