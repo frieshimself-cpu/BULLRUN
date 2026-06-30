@@ -832,6 +832,16 @@
     return `rgb(${r},${g},${bl})`;
   }
   function withA(rgb, a) { return rgb.replace("rgb(", "rgba(").replace(")", `,${a})`); }
+  function toRGB(c) {
+    if (c[0] === "#") { const a = parseInt(c.slice(1), 16); return [(a >> 16) & 255, (a >> 8) & 255, a & 255]; }
+    const m = c.match(/\d+/g); return m ? [+m[0], +m[1], +m[2]] : [0, 0, 0];
+  }
+  // atmospheric perspective: blend a colour toward the horizon sky by t (0..1).
+  // Distant scenery thus loses contrast and its edges stop shimmering/aliasing.
+  function atmo(col, t) {
+    const c = toRGB(col), s = toRGB(env.bot);
+    return `rgb(${Math.round(lerp(c[0], s[0], t))},${Math.round(lerp(c[1], s[1], t))},${Math.round(lerp(c[2], s[2], t))})`;
+  }
   const env = { top: "#3f8ee6", bot: "#cdeaff", sun: "#fff6c8", sunY: 0.30, dark: 0, amb: "rgba(0,0,0,0)" };
   function updateEnv() {
     const period = 1800;
@@ -856,7 +866,6 @@
   }
 
   // sky gradient + sun/moon + stars + parallax clouds
-  let cloudOffset = 0;
   function drawSky() {
     const horizon = H * HORIZON_FRAC;
     const sky = ctx.createLinearGradient(0, 0, 0, horizon + 40);
@@ -889,14 +898,20 @@
       ctx.beginPath(); ctx.arc(sunX + 2, sunY + 16, 4, 0, Math.PI * 2); ctx.fill();
     }
 
-    // clouds (thin out at night)
-    cloudOffset = (game.dist * 0.6) % (W + 300);
+    // clouds (thin out at night). They drift right->left with parallax and
+    // wrap around a span that is WIDER than the screen on both sides, so the
+    // wrap-around always happens fully off-screen. The old version used a
+    // modulo that snapped a cloud across the middle of the sky every cycle —
+    // that was the "long thing flashing in the sky".
     ctx.fillStyle = `rgba(255,255,255,${(0.85 * (1 - env.dark * 0.7)).toFixed(3)})`;
+    const span = W + 360;                       // wrap distance, > screen width
     for (let i = 0; i < 4; i++) {
-      const cx = ((i * 180 + 60) - cloudOffset * (0.3 + i * 0.05)) % (W + 200);
-      const x = cx < -150 ? cx + W + 200 : cx;
+      const r = 28 + (i % 3) * 8;
+      let x = (i * 230 + 90 - game.dist * (0.34 + i * 0.05)) % span;
+      if (x < 0) x += span;                     // keep in [0, span)
+      x -= 180;                                 // shift so both wrap edges are off-screen
       const y = horizon * (0.25 + (i % 2) * 0.2);
-      cloud(x, y, 28 + (i % 3) * 8);
+      cloud(x, y, r);
     }
   }
   function cloud(x, y, r) {
@@ -971,11 +986,12 @@
 
     // horizon haze — a soft band at the vanishing point that blends the far
     // tracks/rails into the distance so they don't shimmer at the top middle
-    const haze = ctx.createLinearGradient(0, horizon - 4, 0, horizon + 60);
-    haze.addColorStop(0, withA(env.bot, 0.85));
+    const haze = ctx.createLinearGradient(0, horizon - 8, 0, horizon + 66);
+    haze.addColorStop(0, withA(env.bot, 0.97));
+    haze.addColorStop(0.45, withA(env.bot, 0.6));
     haze.addColorStop(1, withA(env.bot, 0));
     ctx.fillStyle = haze;
-    ctx.fillRect(0, horizon - 4, W, 64);
+    ctx.fillRect(0, horizon - 8, W, 74);
   }
 
   // hashless deterministic pseudo-random for stable scenery
@@ -985,25 +1001,37 @@
   function drawScenery() {
     const STEP = 5;
     const phase = game.dist % STEP;
+    // Cap how far the skyline draws and fade the farthest row in. Buildings far
+    // enough to be sub-pixel at the vanishing point used to pop in/out every
+    // few frames — a shimmering flicker right at the top-middle horizon.
+    const SCENERY_FAR = 41, FADE_OVER = 9;
     const BCOL = ["#7d8aa5", "#9aa0b0", "#8a7f9a", "#6f7d8c", "#a59a8c", "#8c93a8"];
     // draw far buildings first (already far->near because z decreases)
     for (let z = Z_FAR; z > 0; z -= STEP) {
       const zz = z - phase;
-      if (zz <= 0.4) continue;
+      if (zz <= 0.4 || zz > SCENERY_FAR) continue;
+      const boxAlpha = clamp((SCENERY_FAR - zz) / FADE_OVER, 0, 1);
+      // haze toward the sky with distance (atmospheric perspective)
+      const atm = clamp((zz - 5) / 30, 0, 0.78);
       for (const side of [-1, 1]) {
         const idx = Math.round(z / STEP) * 2 + (side > 0 ? 1 : 0);
         const hgt = 2.6 + h1(idx) * 4.5;
         const wHalf = 0.55 + h1(idx + 7) * 0.35;
         const bx = side * (BED_HALF + 0.8 + h1(idx + 3) * 1.4 + wHalf);
-        const col = BCOL[Math.floor(h1(idx + 1) * BCOL.length) % BCOL.length];
-        drawBox(bx, 0, hgt, wHalf, zz, zz + 1.4, col, shade(col, 0.16));
-        // window grid (deterministic lit/unlit so it doesn't flicker)
+        const baseCol = BCOL[Math.floor(h1(idx + 1) * BCOL.length) % BCOL.length];
+        const col = atmo(baseCol, atm);
+        ctx.globalAlpha = boxAlpha;
+        drawBox(bx, 0, hgt, wHalf, zz, zz + 1.4, col, atmo(shade(baseCol, 0.16), atm));
+        // window grid (deterministic lit/unlit so it doesn't flicker). Faint and
+        // low-contrast on distant towers so the lit specks don't shimmer.
+        const winAlpha = boxAlpha * (1 - atm);
         for (let wy = 0.5, row = 0; wy < hgt - 0.3; wy += 0.6, row++) {
           for (let c = -1; c <= 1; c++) {
             const lit = h1(idx * 31 + row * 7 + c * 3) > 0.45 - env.dark * 0.22;
             const wp = project(bx + c * wHalf * 0.55, wy, zz);
             if (wp.s <= 0) continue;
             const ws = Math.max(1, (wp.s / FOCAL) * 8);
+            ctx.globalAlpha = winAlpha;
             ctx.fillStyle = lit
               ? `rgba(255,231,148,${(0.55 + env.dark * 0.42).toFixed(2)})`
               : "rgba(40,46,60,0.55)";
@@ -1011,6 +1039,7 @@
           }
         }
       }
+      ctx.globalAlpha = 1;
     }
   }
 
