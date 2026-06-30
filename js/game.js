@@ -806,13 +806,20 @@
   function drawVignette() {
     const key = W + "x" + H;
     if (key !== vignetteKey) {
-      vignetteGrad = ctx.createRadialGradient(W / 2, H * 0.52, H * 0.32, W / 2, H * 0.52, H * 0.82);
+      // centred low so the darkening lives in the gameplay area, not the sky
+      vignetteGrad = ctx.createRadialGradient(W / 2, H * 0.62, H * 0.30, W / 2, H * 0.62, H * 0.85);
       vignetteGrad.addColorStop(0, "rgba(0,0,0,0)");
-      vignetteGrad.addColorStop(1, "rgba(0,0,0,0.30)");
+      vignetteGrad.addColorStop(1, "rgba(0,0,0,0.28)");
       vignetteKey = key;
     }
+    // Vignette ONLY over the ground — NEVER the sky. Darkening the upper sky is
+    // exactly what pinched it into a dark "wedge" between the converging
+    // buildings (the radial fell off toward the top-centre). Clipping it at the
+    // horizon kills the wedge at the source; the gradient is already ~0 there so
+    // there's no visible seam.
+    const horizon = H * HORIZON_FRAC;
     ctx.fillStyle = vignetteGrad;
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillRect(0, horizon, W, H - horizon);
   }
 
   // ---------- day / night cycle ----------
@@ -968,12 +975,19 @@
     const TIE_FAR = 26;
     for (let z = TIE_FAR; z > Z_NEAR; z -= 1.4) {
       const zz = z - tiePhase;
-      if (zz < Z_NEAR) continue;
+      // A tie spans from zz (far edge) to zz-0.45 (near edge). BOTH edges must
+      // stay in front of the camera. If the near edge slips behind the focal
+      // plane (z + CAM_BACK <= 0) its projection scale goes NEGATIVE, which
+      // flips the quad up and across the horizon — drawing a giant inverted
+      // brown triangle in the sky (the "wedge"/"log in the sky"). The old guard
+      // only checked the far edge, so the near edge could still wrap. Clamp it.
+      const zNear = zz - 0.45;
+      if (zNear < Z_NEAR) continue;
       const a = project(-BED_HALF * 0.95, 0.02, zz);
       const b = project(BED_HALF * 0.95, 0.02, zz);
-      const c = project(BED_HALF * 0.95, 0.02, zz - 0.45);
-      const d = project(-BED_HALF * 0.95, 0.02, zz - 0.45);
-      if (a.s <= 0) continue;
+      const c = project(BED_HALF * 0.95, 0.02, zNear);
+      const d = project(-BED_HALF * 0.95, 0.02, zNear);
+      if (a.s <= 0 || c.s <= 0) continue;
       const fade = clamp((TIE_FAR - zz) / 8, 0, 1);
       ctx.fillStyle = `rgba(70,50,31,${fade.toFixed(2)})`;
       ctx.beginPath();

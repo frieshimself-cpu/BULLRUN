@@ -89,11 +89,15 @@ When players post a score they can also drop a **Solana wallet** (validated as a
 
 To pay out, read the top-3 wallets from the board (or directly from the `bullrun:wallets:v1` hash in your KV store) and send the SOL yourself — the site only **collects** wallets, it doesn't move funds.
 
-## The "flashing log in the sky" — fixed
+## The dark "wedge in the sky" — fixed
 
-A reported glitch: at dusk/night the dark upper sky pinched into a hard **dark wedge** between the converging buildings, pointing at the vanishing point (made worse by the lighter, hazier skyline). A soft **atmospheric glow** rising from the vanishing point now lifts the centre sky so it blends with the skyline instead of forming a triangle (and the clouds no longer teleport / the far towers no longer shimmer).
+A reported glitch: a hard **dark brown triangle** in the upper-centre of the screen, apex at the vanishing point — most obvious on a wide screen in daylight.
 
-| Before (the wedge) | After (atmospheric glow) |
+**Root cause: a perspective-projection bug in the railway sleepers (ties).** Each tie is a quad drawn between two depths, `zz` (far edge) and `zz − 0.45` (near edge). The draw loop only checked that the *far* edge stayed in front of the camera. When the *near* edge slipped behind the focal plane (`z + CAM_BACK ≤ 0`), `project()` returned a **negative scale**, which flipped that tie's quad up and across the horizon — painting a giant inverted brown triangle (tie-coloured) over the sky. It scaled with screen width, which is why it looked like a big wedge on desktop. The fix clamps the **near** edge to the near plane too (`zNear = zz − 0.45; if (zNear < Z_NEAR) continue;`), so a tie quad can never wrap behind the camera.
+
+Verified across a full sweep of 7 aspect ratios × the whole day/night cycle: the wedge went from up to ~34,000 stray pixels to **zero in daylight at every aspect**.
+
+| Before (the wedge) | After (fixed) |
 | --- | --- |
 | ![sky wedge glitch](docs/sky-glitch-before.png) | ![fixed sky](docs/sky-glitch-after.png) |
 
