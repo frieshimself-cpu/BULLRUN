@@ -1,3 +1,5 @@
+<img width="541" height="671" alt="Screenshot 2026-07-01 003309" src="https://github.com/user-attachments/assets/01273335-8e42-4e1a-91c6-99fc8f698ddb" />
+<img width="541" height="671" alt="Screenshot 2026-07-01 003309" src="https://github.com/user-attachments/assets/66fbbb82-acc0-4515-96d3-523a751ee9e3" />
 # 🐂 BullRun
 
 A lane-based endless runner set on the railways — **you're a charging bull.** Weave between three tracks, leap over barriers, roll under them, jump onto and ride the roofs of subway trains, scoop up coins, and grab power-ups while the world scrolls faster and faster.
