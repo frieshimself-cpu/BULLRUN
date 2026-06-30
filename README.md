@@ -56,7 +56,7 @@ You have two ways to make pushes deploy automatically — pick **one**:
 The site is wired to a pump.fun token. The mint (contract address) lives in **one place** — the top of [`js/meta.js`](js/meta.js):
 
 ```js
-const TOKEN_CA = "8gnadF516tcL6SCH32BJP8X7cmMed4Z6bKdQUd1Dpump";
+const TOKEN_CA = "FYnF4oiCHijhxzFhjEfqSWJL5Ugz8iuAHkiTs2kxpump";
 ```
 
 From that one constant the site derives:

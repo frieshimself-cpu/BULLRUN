@@ -13,7 +13,7 @@
   // ----------------------------- YOUR TOKEN ---------------------------------
   // The pump.fun mint address. Change this one line to point at a different
   // token; everything else (links, chart, live price) follows from it.
-  const TOKEN_CA = "8gnadF516tcL6SCH32BJP8X7cmMed4Z6bKdQUd1Dpump";
+  const TOKEN_CA = "FYnF4oiCHijhxzFhjEfqSWJL5Ugz8iuAHkiTs2kxpump";
   // --------------------------------------------------------------------------
 
   const $ = (id) => document.getElementById(id);
