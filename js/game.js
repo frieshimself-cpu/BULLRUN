@@ -874,6 +874,20 @@
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, W, horizon + 40);
 
+    // Atmospheric glow rising from the vanishing point. Without it the dark
+    // upper sky framed by the converging buildings reads as a hard dark "wedge"
+    // (esp. at dusk/night). The glow lifts the centre sky so it blends with the
+    // skyline instead of pinching into a triangle, and adds real depth.
+    const gc = toRGB(env.bot);
+    const glowR = (horizon + 40) * 1.5;
+    const glow = ctx.createRadialGradient(W * 0.5, horizon + 6, horizon * 0.06, W * 0.5, horizon + 6, glowR);
+    const gA = 0.42 + env.dark * 0.34;            // stronger when the sky is dark
+    glow.addColorStop(0, `rgba(${gc[0]},${gc[1]},${gc[2]},${gA.toFixed(3)})`);
+    glow.addColorStop(0.55, `rgba(${gc[0]},${gc[1]},${gc[2]},${(gA * 0.4).toFixed(3)})`);
+    glow.addColorStop(1, `rgba(${gc[0]},${gc[1]},${gc[2]},0)`);
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, horizon + 40);
+
     // stars (fade in as it darkens)
     if (env.dark > 0.35) {
       ctx.fillStyle = `rgba(255,255,255,${((env.dark - 0.35) * 0.9).toFixed(3)})`;

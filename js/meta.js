@@ -13,7 +13,7 @@
   // ----------------------------- YOUR TOKEN ---------------------------------
   // The pump.fun mint address. Change this one line to point at a different
   // token; everything else (links, chart, live price) follows from it.
-  const TOKEN_CA = "9rgcgoRDGfSG2diaBhgbj5a5K76H99ViGf3FNvapump";
+  const TOKEN_CA = "8gnadF516tcL6SCH32BJP8X7cmMed4Z6bKdQUd1Dpump";
   // --------------------------------------------------------------------------
 
   const $ = (id) => document.getElementById(id);
@@ -89,16 +89,26 @@
   // ------------------------------- leaderboard ------------------------------
   const LB_LOCAL_KEY = "bullrun_lb_local";
   const TAG_KEY = "bullrun_tag";
+  const WALLET_KEY = "bullrun_wallet";
   let lastMine = null;
+
+  // light Solana-address check (base58, 32–44 chars); "" if it isn't one
+  const cleanWallet = (w) =>
+    /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(String(w || "").trim()) ? String(w).trim() : "";
+  const shortWallet = (w) => (w ? w.slice(0, 4) + "…" + w.slice(-4) : "");
 
   function localBoard() {
     try { return JSON.parse(localStorage.getItem(LB_LOCAL_KEY) || "[]"); } catch (e) { return []; }
   }
-  function saveLocal(name, score) {
+  function saveLocal(name, score, wallet) {
     const b = localBoard();
     const existing = b.find((e) => e.name === name);
-    if (existing) { if (score > existing.score) existing.score = score; }
-    else b.push({ name, score });
+    if (existing) {
+      if (score > existing.score) existing.score = score;
+      if (wallet) existing.wallet = wallet;
+    } else {
+      b.push(wallet ? { name, score, wallet } : { name, score });
+    }
     b.sort((a, c) => c.score - a.score);
     const top = b.slice(0, 50);
     try { localStorage.setItem(LB_LOCAL_KEY, JSON.stringify(top)); } catch (e) {}
@@ -114,9 +124,17 @@
       list.innerHTML = scores.map((e, i) => {
         const me = lastMine && e.name === lastMine.name && e.score === lastMine.score;
         const rank = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : (i + 1);
+        // top 3 are the SOL-giveaway slots: show wallet status so it's clear
+        // who's payout-ready
+        let tag = "";
+        if (i < 3) {
+          tag = e.wallet
+            ? '<span class="lb-wal ok" title="' + escapeHtml(e.wallet) + '">◎ ' + escapeHtml(shortWallet(e.wallet)) + "</span>"
+            : '<span class="lb-wal miss" title="No wallet on file">◎ no wallet</span>';
+        }
         return '<li class="' + (me ? "me" : "") + '">' +
           '<span class="lb-rank">' + rank + "</span>" +
-          '<span class="lb-name">' + escapeHtml(e.name) + "</span>" +
+          '<span class="lb-name">' + escapeHtml(e.name) + tag + "</span>" +
           '<span class="lb-score">' + fmt(e.score) + "</span></li>";
       }).join("");
     }
@@ -138,16 +156,18 @@
     renderBoard(localBoard(), "📱 This device — connect a store for a global board");
   }
 
-  async function submitScore(name, score) {
+  async function submitScore(name, score, wallet) {
     name = (name || "").trim().slice(0, 14) || "anon";
+    wallet = cleanWallet(wallet);
     try { localStorage.setItem(TAG_KEY, name); } catch (e) {}
+    try { if (wallet) localStorage.setItem(WALLET_KEY, wallet); } catch (e) {}
     lastMine = { name, score };
-    saveLocal(name, score); // optimistic, also the source of truth if offline
+    saveLocal(name, score, wallet); // optimistic, also the source of truth if offline
     try {
       const r = await fetch("/api/scores", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, score }),
+        body: JSON.stringify({ name, score, wallet }),
       });
       const j = await r.json();
       if (j && j.configured && Array.isArray(j.scores)) {
@@ -177,15 +197,23 @@
 
     const post = $("lb-post");
     const nameInput = $("lb-name");
+    const walletInput = $("lb-wallet");
     if (post) post.addEventListener("click", async () => {
       if (pendingScore == null) return;
+      const walletRaw = walletInput ? walletInput.value.trim() : "";
+      if (walletRaw && !cleanWallet(walletRaw)) {
+        const resEl = $("lb-result");
+        if (resEl) resEl.textContent = "That doesn't look like a Solana wallet — check it or leave it blank.";
+        return;
+      }
       post.disabled = true;
-      const res = await submitScore(nameInput ? nameInput.value : "", pendingScore);
+      const res = await submitScore(nameInput ? nameInput.value : "", pendingScore, walletRaw);
       const resEl = $("lb-result");
       if (resEl) {
-        resEl.textContent = res.rank
+        const base = res.rank
           ? (res.global ? "Posted! Global rank #" + res.rank + " 🏆" : "Saved — local rank #" + res.rank)
           : "Posted! 🏆";
+        resEl.textContent = base + (cleanWallet(walletRaw) ? " · wallet saved ◎" : "");
       }
       pendingScore = null; // prevent double-posting the same run
       openBoard();
@@ -197,6 +225,11 @@
         let saved = "";
         try { saved = localStorage.getItem(TAG_KEY) || ""; } catch (er) {}
         nameInput.value = saved;
+      }
+      if (walletInput) {
+        let savedW = "";
+        try { savedW = localStorage.getItem(WALLET_KEY) || ""; } catch (er) {}
+        walletInput.value = savedW;
       }
       const resEl = $("lb-result"); if (resEl) resEl.textContent = "";
       if (post) post.disabled = false;

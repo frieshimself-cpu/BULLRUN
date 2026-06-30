@@ -56,7 +56,7 @@ You have two ways to make pushes deploy automatically — pick **one**:
 The site is wired to a pump.fun token. The mint (contract address) lives in **one place** — the top of [`js/meta.js`](js/meta.js):
 
 ```js
-const TOKEN_CA = "9rgcgoRDGfSG2diaBhgbj5a5K76H99ViGf3FNvapump";
+const TOKEN_CA = "8gnadF516tcL6SCH32BJP8X7cmMed4Z6bKdQUd1Dpump";
 ```
 
 From that one constant the site derives:
@@ -79,6 +79,23 @@ To turn on the global board on Vercel:
 2. Redeploy. The function reads those env vars; if they're absent it just returns the local-fallback response, so nothing breaks before you set it up.
 
 Scores are stored as a sorted set keeping each tag's best. They're **client-reported**, so treat the board as a fun ranking, not an anti-cheat tournament.
+
+### Top-3 $SOL giveaway wallets
+
+When players post a score they can also drop a **Solana wallet** (validated as a base58 address) so the **top 3** on the board are payout-ready for a SOL giveaway. Wallets are stored alongside the board:
+
+- **Global store:** a Redis hash `bullrun:wallets:v1` (tag → wallet), returned with the scores. The leaderboard shows a `◎ short…addr` badge on the top-3 rows (or `◎ no wallet` if one hasn't been provided yet) so you can see who's eligible at a glance. Hover a badge to read the full address.
+- **No store configured:** the wallet is kept in `localStorage` with the local board.
+
+To pay out, read the top-3 wallets from the board (or directly from the `bullrun:wallets:v1` hash in your KV store) and send the SOL yourself — the site only **collects** wallets, it doesn't move funds.
+
+## The "flashing log in the sky" — fixed
+
+A reported glitch: at dusk/night the dark upper sky pinched into a hard **dark wedge** between the converging buildings, pointing at the vanishing point (made worse by the lighter, hazier skyline). A soft **atmospheric glow** rising from the vanishing point now lifts the centre sky so it blends with the skyline instead of forming a triangle (and the clouds no longer teleport / the far towers no longer shimmer).
+
+| Before (the wedge) | After (atmospheric glow) |
+| --- | --- |
+| ![sky wedge glitch](docs/sky-glitch-before.png) | ![fixed sky](docs/sky-glitch-after.png) |
 
 ## Controls
 

@@ -331,7 +331,24 @@ h2 { font-size: clamp(28px, 7cqmin, 46px); margin-bottom: 18px; color: var(--gol
   font-family: inherit; text-align: center;
 }
 #lb-name:focus { outline: none; border-color: var(--gold); }
-.lb-result { font-size: clamp(12px, 2.6cqmin, 15px); color: #9affd0; min-height: 1.1em; margin-bottom: 8px; font-weight: bold; }
+.lb-wallet {
+  display: block; width: 88%; max-width: 380px; margin: 8px auto 0; box-sizing: border-box;
+  border-radius: 10px; border: 2px solid rgba(153, 255, 208, 0.35);
+  background: rgba(0, 0, 0, 0.3); color: #fff; padding: 8px 12px;
+  font-size: clamp(12px, 2.6cqmin, 15px); font-family: inherit; text-align: center;
+  letter-spacing: 0.3px;
+}
+.lb-wallet::placeholder { color: rgba(255, 255, 255, 0.45); }
+.lb-wallet:focus { outline: none; border-color: #9affd0; }
+.lb-result { font-size: clamp(12px, 2.6cqmin, 15px); color: #9affd0; min-height: 1.1em; margin: 8px 0; font-weight: bold; }
+
+/* wallet status badge on the top-3 leaderboard rows */
+.lb-list .lb-wal {
+  margin-left: 8px; font-size: 0.74em; font-weight: 700; padding: 1px 7px;
+  border-radius: 999px; vertical-align: 1px; white-space: nowrap;
+}
+.lb-list .lb-wal.ok { color: #9affd0; background: rgba(153, 255, 208, 0.14); }
+.lb-list .lb-wal.miss { color: #ffae8c; background: rgba(255, 174, 140, 0.12); }
 
 .coin-dot {
   display: inline-block;
